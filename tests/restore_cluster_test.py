@@ -25,7 +25,7 @@ from unittest.mock import Mock
 
 from medusa.config import (MedusaConfig, StorageConfig, _namedtuple_from_dict, CassandraConfig, GrpcConfig,
                            KubernetesConfig, parse_config)
-from medusa.restore_cluster import RestoreJob, expand_repeatable_option
+from medusa.restore_datacenter import RestoreJob, expand_repeatable_option
 from medusa.utils import evaluate_boolean
 
 
