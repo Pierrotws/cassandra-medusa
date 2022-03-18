@@ -187,6 +187,7 @@ def restore_node_sstableloader(config, temp_dir, backup_name, in_place, keep_aut
 
 def invoke_sstableloader(config, download_dir, keep_auth, fqtns_to_restore, storage_port):
     hostname_resolver = HostnameResolver(medusa.utils.evaluate_boolean(config.cassandra.resolve_ip_addresses))
+    node_fqdn = hostname_resolver.resolve_fqdn() if config.storage.fqdn is None else config.storage.fqdn 
     cassandra_is_ccm = int(shlex.split(config.cassandra.is_ccm)[0])
     keyspaces = os.listdir(str(download_dir))
     for keyspace in keyspaces:
@@ -200,7 +201,7 @@ def invoke_sstableloader(config, download_dir, keep_auth, fqtns_to_restore, stor
                     cql_username = 'foo' if config.cassandra.cql_username is None else config.cassandra.cql_username
                     cql_password = 'foo' if config.cassandra.cql_password is None else config.cassandra.cql_password
                     sstableloader_args = [config.cassandra.sstableloader_bin,
-                                          '-d', hostname_resolver.resolve_fqdn() if cassandra_is_ccm == 0
+                                          '-d', node_fqdn if cassandra_is_ccm == 0
                                           else '127.0.0.1',
                                           '--conf-path', config.cassandra.config_file,
                                           '--username', cql_username,
