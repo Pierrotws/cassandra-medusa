@@ -91,6 +91,11 @@ backup_grace_period_in_days = 10
 ; Defaults to True
 ;use_sudo_for_restore = True
 
+; Disable/enable fully qualified tablename discovering
+; When true, local restoration can restore a table with a different uuid considering the backup
+; Defaults to False
+;search_fqtn_from_name = False
+
 ;api_profile = <AWS profile to use>
 
 ;host = <Optional object storage host to connect to>

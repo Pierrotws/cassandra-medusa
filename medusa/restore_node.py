@@ -102,7 +102,7 @@ def restore_node_locally(config, temp_dir, backup_name, in_place, keep_auth, see
     use_sudo = medusa.utils.evaluate_boolean(config.storage.use_sudo_for_restore)
     clean_path(cassandra.commit_logs_path, use_sudo, keep_folder=True)
     clean_path(cassandra.saved_caches_path, use_sudo, keep_folder=True)
-
+    search_fqtn_from_name = medusa.utils.evaluate_boolean(config.storage.search_fqtn_from_name)
     # move backup data to Cassandra data directory according to system table
     logging.info('Moving backup data to Cassandra data directory')
     manifest = json.loads(node_backup.manifest)
@@ -111,7 +111,7 @@ def restore_node_locally(config, temp_dir, backup_name, in_place, keep_auth, see
         if fqtn not in fqtns_to_restore:
             logging.debug('Skipping restore for {}'.format(fqtn))
             continue
-        maybe_restore_section(section, download_dir, cassandra.root, in_place, keep_auth, use_sudo)
+        maybe_restore_section(section, download_dir, cassandra.root, in_place, keep_auth, search_fqtn_from_name, use_sudo)
 
     node_fqdn = storage.config.fqdn
     token_map_file = download_dir / 'tokenmap.json'
@@ -281,8 +281,7 @@ def clean_path(p, use_sudo, keep_folder=False):
                 subprocess.check_output(['rm', '-rf', path])
 
 
-def maybe_restore_section(section, download_dir, cassandra_data_dir, in_place, keep_auth, use_sudo=True):
-    allow_globbing = True
+def maybe_restore_section(section, download_dir, cassandra_data_dir, in_place, keep_auth, search_fqtn_from_name, use_sudo=True):
     # decide whether to restore files for this table or not
 
     # we restore everything from all keyspaces when restoring in_place
@@ -304,7 +303,8 @@ def maybe_restore_section(section, download_dir, cassandra_data_dir, in_place, k
     src = download_dir / section['keyspace'] / section['columnfamily']
     # not appending the column family name because mv later on copies the whole folder
     dst = cassandra_data_dir / section['keyspace'] / section['columnfamily']
-    if not dst.exists() and allow_globbing:
+    #If path does not exists and search_fqtn_from_name set in conf, search fqtn with from tablename
+    if not dst.exists() and search_fqtn_from_name:
         cfglob = section['columnfamily'].split('-')[0]
         dstglob = '{}/{}/{}-*'.format(cassandra_data_dir, section['keyspace'], cfglob)
         res = glob.glob(dstglob)
