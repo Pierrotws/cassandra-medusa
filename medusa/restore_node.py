@@ -14,9 +14,11 @@
 # limitations under the License.
 
 import collections
+import glob
 import json
 import logging
 import os
+from pathlib import Path
 import shlex
 import subprocess
 import sys
@@ -280,6 +282,7 @@ def clean_path(p, use_sudo, keep_folder=False):
 
 
 def maybe_restore_section(section, download_dir, cassandra_data_dir, in_place, keep_auth, use_sudo=True):
+    allow_globbing = True
     # decide whether to restore files for this table or not
 
     # we restore everything from all keyspaces when restoring in_place
@@ -301,7 +304,16 @@ def maybe_restore_section(section, download_dir, cassandra_data_dir, in_place, k
     src = download_dir / section['keyspace'] / section['columnfamily']
     # not appending the column family name because mv later on copies the whole folder
     dst = cassandra_data_dir / section['keyspace'] / section['columnfamily']
-
+    if not dst.exists() and allow_globbing:
+        cfglob = section['columnfamily'].split('-')[0]
+        dstglob = '{}/{}/{}-*'.format(cassandra_data_dir, section['keyspace'], cfglob)
+        res = glob.glob(dstglob)
+        rsize = len(res)
+        if rsize == 1:
+            logging.debug('fqtn found: {}'.format(dst))
+            dst = Path(res[0])
+        elif rsize > 1:
+            logging.error('more than one path found with: {}. Should be 0 or 1'.format(dstglob))
     # prepare the destination folder
     if dst.exists():
         logging.debug('Cleaning directory {}'.format(dst))
